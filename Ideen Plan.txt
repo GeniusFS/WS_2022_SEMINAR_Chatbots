@@ -1,0 +1,18 @@
+Ideen für Chatinteraktionen:
+
+Weitere mögliche Slots
+- Koordinaten
+- Room Type (Apartment, Entire Home, etc)
+- Preis
+- Bewertungen(Anzahl)
+- Name des Gastgebers
+- minimum Nights
+- Availabilty(Tage im Jahr)
+
+Grounding, Bestätigung der Nachfrage
+
+Nachfragen vom Bot (Fehlende Slots ergänzen)
+
+Loop beibehalten
+
+Ansatz von Repair(Wenn kein vorhandene Stadt angegeben wurde, nochmal Nachfragen)
