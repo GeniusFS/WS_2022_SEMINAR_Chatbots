@@ -96,64 +96,55 @@ def airbnb_bot(sql_file, top_n):
         'Tempelhof - Schöneberg', 'Treptow - Köpenick']
     print('Wir haben Appartements in folgenden Stadtteilen:')
     print(', '.join(neighbourhoods))
+    
+    #Liste an Wörtern mit denen der Bot beendet werden kann
+    stop_words = ['stop', 'cancel', 'tschüss']
+    #Loop für mehrfachen Input
+    while(True):
+        # get query from user
+        sentence = input('\nWo möchtest du denn übernachten?\n')
+        # normalize to lowercase
+        sentence = sentence.lower()
+        #stop the Chatbot if a Word in stop_words is written
+        if sentence in stop_words:
+            print('Ich hoffe ich konnte helfen. Einen schönen Tag noch!')
+            break;
 
-    # get query from user
-    sentence = input('\nWo möchtest du denn übernachten?\n')
-    # normalize to lowercase
-    sentence = sentence.lower()
+        # NLU -SPRACHVERSTEHEN
 
-    #####################################################################
-    # STEP 2: extract location information and check whether it's valid #
-    #####################################################################
+        # extract location from user input
+        location = get_location_from_input(sentence)
+        
 
-
-
-    # NLU -SPRACHVERSTEHEN
-
-    # extract location from user input
-    location = get_location_from_input(sentence)
-
-    if location is None:
-        # if the user input doesn't contain valid location information:
-        # apologize & quit
-        print('\nEntschuldigung, das habe ich leider nicht verstanden...')
-        return
-
-    #####################################################################
-    # STEP 3: query sqlite file for flats in the area given by the user #
-    #####################################################################
-
-    # get matches from csv file
-    columns = ['name', 'neighbourhood', 'price']
-    results = query_sql(
-            key='neighbourhood_group', value=location,
-            columns=columns, sql_file=sql_file
-        )
-
-    # if there are no results: apologize & quit
-    if len(results) == 0:
-        print('Tut mir Leid, ich konnte leider nichts finden!')
-        return
-
-
-    #############################################################################
-    # STEP 4: print information about the first top_n flats in the results list #
-    #############################################################################
-
+        if location is None:
+            # if the user input doesn't contain valid location information:
+                # apologize & quit
+            print('\nEntschuldigung, das habe ich leider nicht verstanden...')
+        # if there are no results: apologize & quit
+        else:
+             # get matches from csv file
+            columns = ['name', 'neighbourhood', 'price']
+            results = query_sql(
+                key='neighbourhood_group', value=location,
+                columns=columns, sql_file=sql_file
+                )
+            if len(results) == 0:
+                 print('Tut mir Leid, ich konnte leider nichts finden!')
     # NLG- Sprachgenerierung
 
-    # return results
-    print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
-        len(results), location))
-    print('Hier sind die {} besten Ergebnisse:\n'.format(top_n))
+            # return results
+            else: 
+                print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
+                    len(results), location))
+                print('Hier sind die {} besten Ergebnisse:\n'.format(top_n))
 
-    # print the first top_n entries from the results list
-    for r in results[:top_n]:
-        answer = '"{}", {}. Das Apartment kostet {}€.'.format(
-            # look at the columns list to see what r[0], r[1], r[2] are referring to!
-            r[0], r[1], r[2]
-        )
-        print(answer)
+            # print the first top_n entries from the results list
+                for r in results[:top_n]:
+                    answer = '"{}", {}. Das Apartment kostet {}€.'.format(
+                        # look at the columns list to see what r[0], r[1], r[2] are referring to!
+                        r[0], r[1], r[2]
+                        )
+                    print(answer)
 
 
 if __name__ == '__main__':
