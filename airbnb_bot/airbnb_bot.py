@@ -67,7 +67,6 @@ def query_sql(key, value, columns, sql_file):
 def airbnb_bot(sql_file, top_n):
     """
     find flats in a given location.
-
     main steps:
     1) get input sentence from the user; normalize upper/lowercase
     2) extract the location name from the user input
@@ -96,16 +95,18 @@ def airbnb_bot(sql_file, top_n):
         'Tempelhof - Schöneberg', 'Treptow - Köpenick']
     print('Wir haben Appartements in folgenden Stadtteilen:')
     print(', '.join(neighbourhoods))
+    # Information für den User, welche Wörter den bot beenden (Lilith)
+    print('Um das Gespräuch zu beenden, schreibe "stop", "cancel" oder "tschüss".')
     
-    #Liste an Wörtern mit denen der Bot beendet werden kann
+    #Liste an Wörtern mit denen der Bot beendet werden kann (Felix)
     stop_words = ['stop', 'cancel', 'tschüss']
-    #Loop für mehrfachen Input
+    #Loop für mehrfachen Input (Felix)
     while(True):
         # get query from user
         sentence = input('\nWo möchtest du denn übernachten?\n')
         # normalize to lowercase
         sentence = sentence.lower()
-        #stop the Chatbot if a Word in stop_words is written
+        #stop the Chatbot if a Word in stop_words is written (Felix)
         if sentence in stop_words:
             print('Ich hoffe ich konnte helfen. Einen schönen Tag noch!')
             break;
@@ -145,6 +146,24 @@ def airbnb_bot(sql_file, top_n):
                         r[0], r[1], r[2]
                         )
                     print(answer)
+                    
+        # Grounding (Lilith)
+                    
+        print('\nBist du mit den Ergebnissen deiner Suche zufrieden?')
+        
+        ground_words = ['ja', 'klar', 'danke']
+        ground = input('\n Falls etwas für dich dabei ist, antworte mit "ja".\n')
+        # normalize to lowercase
+        ground = ground.lower()
+        # stop the Chatbot if a word in ground_words is written
+        if ground in ground_words:
+            print('Schön, dass du etwas gefunden hast!')
+            break;
+        
+                    
+                    
+                    
+                    
 
 
 if __name__ == '__main__':
