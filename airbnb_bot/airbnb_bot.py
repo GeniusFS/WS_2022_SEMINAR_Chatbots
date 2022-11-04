@@ -63,6 +63,10 @@ def query_sql(key, value, columns, sql_file):
 
     return results
 
+def take_third(elem):
+    return elem[2]
+
+
 
 def airbnb_bot(sql_file, top_n):
     """
@@ -132,20 +136,57 @@ def airbnb_bot(sql_file, top_n):
             if len(results) == 0:
                  print('Tut mir Leid, ich konnte leider nichts finden!')
     # NLG- Sprachgenerierung
+    
+    
+    # Sorted by best result OR lowest price (Lilith)
 
-            # return results
+            
             else: 
-                print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
-                    len(results), location))
-                print('Hier sind die {} besten Ergebnisse:\n'.format(top_n))
-
-            # print the first top_n entries from the results list
-                for r in results[:top_n]:
-                    answer = '"{}", {}. Das Apartment kostet {}€.'.format(
-                        # look at the columns list to see what r[0], r[1], r[2] are referring to!
-                        r[0], r[1], r[2]
-                        )
-                    print(answer)
+                
+                # return results sorted by lowest price
+                
+                pricing_word = ['ja']
+                pricing = input('\nSuchst du ein Zimmer für wenig Geld?')
+                pricing = pricing.lower()
+                if pricing in pricing_word:
+                    print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
+                        len(results), location))
+                    print('Hier sind die {} günstigsten Ergebnisse:\n'.format(top_n))
+                    
+                    resultprice = sorted(results, key=take_third)
+                    
+                    # print the first top_n entries from the results list
+                    for r in resultprice[:top_n]:
+                        
+                        answer = '"{}", {}. Das Apartment kostet {}€.'.format(
+                            # look at the columns list to see what r[0], r[1], r[2] are referring to!
+                            r[0], r[1], r[2]
+                            )
+                        
+                        print(answer)
+                    
+       
+                    
+                # print the first top_n entries from the results list ignoring the price
+                # return results
+                                
+                else:
+                
+                
+                    print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
+                        len(results), location))
+                    print('Hier sind die {} besten Ergebnisse:\n'.format(top_n))
+                    
+                    # print the first top_n entries from the results list
+                    for r in results[:top_n]:
+                        answer = '"{}", {}. Das Apartment kostet {}€.'.format(
+                            # look at the columns list to see what r[0], r[1], r[2] are referring to!
+                            r[0], r[1], r[2]
+                            )
+                        print(answer)
+                
+            
+                    
                     
         # Grounding (Lilith)
                     
