@@ -22,6 +22,25 @@ location_regex = [
 ]
 
 
+#Listen für Inputüberprüfungen (Felix)
+stop_words = ['stop', 'cancel', 'tschüss', 'abbruch']
+positive_answers = ['ja', 'klar', 'natürlich']
+pricing_words = ['preis', 'kosten']
+nights_words = ['nächte', 'min nächte', 'minimum nächte']
+available_words = ['verfügbarkeit', 'verfügbar']
+overall_slots = ['preis', 'kosten', 'nächte', 'min nächte', 'minimum nächte', 'verfügbarkeit', 'verfügbar']
+
+#Regex function to get the wanted input extracted(Felix)
+def get_specific_from_input(sentence, regex_list):
+    for regex in regex_list:
+        match = re.search(regex, sentence)
+        if match:
+            # if a regex matches the input: return the regex
+            return regex
+    # return None if no regular expression matches the input
+    return None
+
+
 def get_location_from_input(sentence, regex_list=location_regex):
     """
     get valid location names from user input using RegEx
@@ -66,7 +85,11 @@ def query_sql(key, value, columns, sql_file):
 def take_third(elem):
     return elem[2]
 
+def take_fourth(elem):
+    return elem[3]
 
+def take_fifth(elem):
+    return elem[4]
 
 def airbnb_bot(sql_file, top_n):
     """
@@ -100,10 +123,9 @@ def airbnb_bot(sql_file, top_n):
     print('Wir haben Appartements in folgenden Stadtteilen:')
     print(', '.join(neighbourhoods))
     # Information für den User, welche Wörter den bot beenden (Lilith)
-    print('Um das Gespräuch zu beenden, schreibe "stop", "cancel" oder "tschüss".')
+    print('Um das Gespräch zu beenden, schreibe "stop", "cancel" oder "tschüss".')
     
-    #Liste an Wörtern mit denen der Bot beendet werden kann (Felix)
-    stop_words = ['stop', 'cancel', 'tschüss']
+    
     #Loop für mehrfachen Input (Felix)
     while(True):
         # get query from user
@@ -128,52 +150,124 @@ def airbnb_bot(sql_file, top_n):
         # if there are no results: apologize & quit
         else:
              # get matches from csv file
-            columns = ['name', 'neighbourhood', 'price']
+            columns = ['name', 'neighbourhood', 'price', 'minimum_nights', 'availability_365']
             results = query_sql(
                 key='neighbourhood_group', value=location,
                 columns=columns, sql_file=sql_file
                 )
             if len(results) == 0:
                  print('Tut mir Leid, ich konnte leider nichts finden!')
-    # NLG- Sprachgenerierung
-    
-    
-    # Sorted by best result OR lowest price (Lilith)
-
-            
+ 
             else: 
+                #Abfrage zu Spezifikationen der Anzeige (Felix)
+                specifics = input('Möchtest du spezifische Ergebnisse?\n')
+                specifics = specifics.lower()
                 
-                # return results sorted by lowest price
-                
-                pricing_word = ['ja']
-                pricing = input('\nSuchst du ein Zimmer für wenig Geld?')
-                pricing = pricing.lower()
-                if pricing in pricing_word:
-                    print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
-                        len(results), location))
-                    print('Hier sind die {} günstigsten Ergebnisse:\n'.format(top_n))
+                specifics = get_specific_from_input(specifics, positive_answers)
+                if specifics in positive_answers:
+                    print('Welche Spezifikation möchtest du angeben?')
+                    slots = input('Wir haben: Preis, Minimum Nächte, Verfügbarkeit\n')
+                    slots = slots.lower()
                     
-                    resultprice = sorted(results, key=take_third)
+                    slots = get_specific_from_input(slots, overall_slots)
                     
-                    # print the first top_n entries from the results list
-                    for r in resultprice[:top_n]:
+                    if slots in pricing_words:
+                        # Sorted by best result OR lowest price (Lilith)
+                        # return results sorted by lowest price
+                        pricing = input('\nSuchst du ein Zimmer für wenig Geld?\n')
+                        pricing = pricing.lower()
+                        if pricing in positive_answers:
+                            print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
+                                len(results), location))
+                            print('Hier sind die {} günstigsten Ergebnisse:\n'.format(top_n))
+                            
+                            resultprice = sorted(results, key=take_third)
+                            
+                            # print the first top_n entries from the results list
+                            for r in resultprice[:top_n]:
+                                
+                                answer = '"{}", {}. Das Apartment kostet {}€.'.format(
+                                    # look at the columns list to see what r[0], r[1], r[2] are referring to!
+                                    r[0], r[1], r[2]
+                                    )
+                                
+                                print(answer)
+                        else:
+                             # print the first top_n entries from the results list ignoring the price
+                             # return results
+                            print('Ich habe ohne Spezifikationen {} passende Wohnungen in {} gefunden.\n'.format(
+                                len(results), location))
+                            print('Hier sind die {} besten Ergebnisse:\n'.format(top_n))
+                            
+                            # print the first top_n entries from the results list
+                            for r in results[:top_n]:
+                                answer = '"{}", {}. Das Apartment kostet {}€.'.format(
+                                    # look at the columns list to see what r[0], r[1], r[2] are referring to!
+                                    r[0], r[1], r[2]
+                                    )
+                                print(answer)
+                                
+                    #Spezifische Ausgabe für Minimum Nights (Felix)
+                    elif slots in nights_words:
+                        nights = input('\nWie viele Nächte soll die Wohnung als Mindestzahl anbieten?\n')
                         
-                        answer = '"{}", {}. Das Apartment kostet {}€.'.format(
-                            # look at the columns list to see what r[0], r[1], r[2] are referring to!
-                            r[0], r[1], r[2]
-                            )
+                        if nights.isdigit():
+                            resultnights = sorted(results, key=take_fourth)
+                            minimum_nights_result = []
+                            for i in resultnights:
+                                min_night = i[3]
+                                if min_night >= int(nights):
+                                    minimum_nights_result.append(i)
+                            if len(minimum_nights_result) == 0:
+                                print('Es gibt kein Angebot mit der Mindestanzahl an Nächten.\n')
+                            else:
+                                print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
+                                    len(minimum_nights_result), location))
+                                print('Hier sind die {} besten Ergebnisse:\n'.format(top_n))
+                                
+                                for r in minimum_nights_result[:top_n]:
+                                    answer = '"{}", {}. Das Apartment kostet {}€. Die Mindestanzahl an Nächten ist {}.'.format(
+                                    r[0], r[1], r[2], r[3]
+                                    )
+                                    print(answer)
+                        else:
+                            print('Tut mir leid, Sie müssen eine Zahl angeben.')
+                            
+                    #Spezifische Ausgabe für Availability (Felix)    
+                    elif slots in available_words:
+                        days = input('\nWie viele Tage im Jahr soll die Wohnung zur Verfügung stehen?\n')
                         
-                        print(answer)
-                    
+                        if days.isdigit() and int(days) < 366:
+                            resultdays = sorted(results, key=take_fifth)
+                            days_result = []
+                            for i in resultdays:
+                                d = i[4]
+                                if d >= int(days):
+                                    days_result.append(i)
+                            if len(days_result) == 0:
+                                print('Es gibt kein Angebot mit dieser Anzahl an verfügbaren Tagen im Jahr\n')
+                            else:
+                                print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
+                                    len(days_result), location))
+                                print('Hier sind die {} besten Ergebnisse:\n'.format(top_n))
+                                
+                                for r in days_result[:top_n]:
+                                    answer = '"{}", {}. Das Apartment kostet {}€. Die verfügbaren Tage im Jahr sind {}.'.format(
+                                    r[0], r[1], r[2], r[4]
+                                    )
+                                    print(answer)
+                        else:
+                            print('Tut mir leid, Sie müssen eine Zahl angeben zwischen 1 und 365.')
+                    else:
+                        print('Tut mir leid, mit dieser Spezifikation kann ich nicht dienen.\n')
        
                     
-                # print the first top_n entries from the results list ignoring the price
-                # return results
+               
                                 
                 else:
                 
                 
-                    print('Ich habe {} passende Wohnungen in {} gefunden.\n'.format(
+                    print('Ich habe ohne Spezifikationen {} passende Wohnungen in {} gefunden.\n'.format(
                         len(results), location))
                     print('Hier sind die {} besten Ergebnisse:\n'.format(top_n))
                     
@@ -188,18 +282,18 @@ def airbnb_bot(sql_file, top_n):
             
                     
                     
-        # Grounding (Lilith)
+            # Grounding (Lilith)
                     
-        print('\nBist du mit den Ergebnissen deiner Suche zufrieden?')
+            print('\nBist du mit den Ergebnissen deiner Suche zufrieden?')
         
-        ground_words = ['ja', 'klar', 'danke']
-        ground = input('\n Falls etwas für dich dabei ist, antworte mit "ja".\n')
-        # normalize to lowercase
-        ground = ground.lower()
-        # stop the Chatbot if a word in ground_words is written
-        if ground in ground_words:
-            print('Schön, dass du etwas gefunden hast!')
-            break;
+            ground_words = ['ja', 'klar', 'danke']
+            ground = input('\n Falls etwas für dich dabei ist, antworte mit "ja".\n')
+            # normalize to lowercase
+            ground = ground.lower()
+            # stop the Chatbot if a word in ground_words is written
+            if ground in ground_words:
+                print('Schön, dass du etwas gefunden hast!')
+                break;
         
                     
                     
