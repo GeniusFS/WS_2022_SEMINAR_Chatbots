@@ -160,7 +160,7 @@ def airbnb_bot(sql_file, top_n):
  
             else: 
                 #Abfrage zu Spezifikationen der Anzeige (Felix)
-                specifics = input('Möchtest du spezifische Ergebnisse?\n')
+                specifics = input('Möchtest du deine Suche weiter eingrenzen?\n') #änderung nele
                 specifics = specifics.lower()
                 
                 specifics = get_specific_from_input(specifics, positive_answers)
@@ -294,6 +294,17 @@ def airbnb_bot(sql_file, top_n):
             if ground in ground_words:
                 print('Schön, dass du etwas gefunden hast!')
                 break;
+
+            # nachfrage, ob der nutzer eine neue suche starten will, sonst verabschiedung (nele)
+            else:
+                restart = input("Schade, dass du nichts gefunden hast. Wenn du eine neue Anfrage starten willst, antworte mit 'ja'.\n")
+                restart = restart.lower()
+                if restart != 'ja':
+                    print("Ok, schade. Ich wünsche dir noch einen schönen Tag!")
+                    break
+
+
+
         
                     
                     
